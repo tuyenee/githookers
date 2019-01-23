@@ -1,0 +1,40 @@
+#!/bin/sh
+#
+# CanITrust team wants to enforce ESLint coding style
+# All .js files need to be ESLint tested before being commited
+#
+
+echo "\nESLint is checking your code\n"
+
+#
+# Staged files: Added, Copied, Modified 
+#
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep ".js$")
+
+if [[ "$STAGED_FILES" = "" ]]; then
+  # Looks like no js files was added or modified, allow commit
+  exit 0
+fi
+
+PASS=true
+
+for FILE in $STAGED_FILES
+do
+  ./node_modules/.bin/eslint "$FILE"
+
+  if [[ "$?" == 0 ]]; then
+    echo "\t\033[32mESLint Passed: $FILE\033[0m"
+  else
+    echo "\t\033[41mESLint Failed: $FILE\033[0m"
+    PASS=false
+  fi
+done
+
+if ! $PASS; then
+  echo "\n> ESLint is \033[41mNOT HAPPY\033[0m. Make ESLint happy first, then try again.\n"
+  exit 1
+else
+  echo "\033[42mYour code is very clean. Well done, mate!\033[0m\n"
+fi
+
+exit $?
